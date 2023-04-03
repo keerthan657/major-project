@@ -1,5 +1,12 @@
 # Adaptive Anomaly Detection System for Software Defined Networks
 
+## Environment
+Ubuntu 20.04 LTS
+
+mininet 2.3.0
+
+ryu-manager 4.30
+
 ## Prerequisites
 
 1. Mininet emulation tool
