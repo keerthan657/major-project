@@ -18,13 +18,7 @@ sudo apt install python3
 3. RYU controller
 
 ```
-pip3 install ryu
-```
-
-OR
-
-```
-pip3 install python3-ryu
+pip3 install ryu (OR) pip3 install python3-ryu
 ```
 
 
