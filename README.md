@@ -1,11 +1,28 @@
 # Adaptive Anomaly Detection System for Software Defined Networks
 
+## Tasks
+### ⬜ - Not Started, 🟨 - Ongoing, 🟩 - Completed
+
+
+🟩 Topology creation with Mininet
+
+⬜ RYU controller stats collection
+
+⬜ WebPage design and integration
+
+🟨 ML models research
+
+⬜ DoS attacks using Kali Linux
+
+⬜ Integrating ML models with RYU controller
+
+⬜ Final tests
+
+
 ## Environment
-Ubuntu 20.04 LTS
-
-mininet 2.3.0
-
-ryu-manager 4.30
+1. Ubuntu 20.04 LTS
+2. mininet 2.3.0
+3. ryu-manager 4.30
 
 ## Prerequisites
 
