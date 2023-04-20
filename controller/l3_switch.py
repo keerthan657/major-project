@@ -21,7 +21,7 @@ from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
-
+from ryu.lib import hub
 
 class SimpleSwitch13(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -29,20 +29,23 @@ class SimpleSwitch13(app_manager.RyuApp):
     def __init__(self, *args, **kwargs):
         super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
+        self.datapaths = []
+        self.flow_stats = {}
+        self.monitor_thread = hub.spawn(self._monitor)
+    
+    def _monitor(self):
+        while True:
+            self.logger.info("MONITOR CALLED .....")
+            for datapath in self.datapaths:
+                self.send_flow_stats_request(datapath)
+            hub.sleep(10)
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
         datapath = ev.msg.datapath
+        self.datapaths.append(datapath)
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
-
-        # install table-miss flow entry
-        #
-        # We specify NO BUFFER to max_len of the output action due to
-        # OVS bug. At this moment, if we specify a lesser number, e.g.,
-        # 128, OVS will send Packet-In with invalid buffer_id and
-        # truncated packet data. In that case, we cannot output packets
-        # correctly.  The bug has been fixed in OVS v2.1.0.
         match = parser.OFPMatch()
         actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER,
                                           ofproto.OFPCML_NO_BUFFER)]
@@ -62,6 +65,32 @@ class SimpleSwitch13(app_manager.RyuApp):
             mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
                                     match=match, instructions=inst)
         datapath.send_msg(mod)
+
+    def send_flow_stats_request(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        req = parser.OFPFlowStatsRequest(datapath, 0, ofproto.OFPTT_ALL,
+                                        ofproto.OFPP_ANY, ofproto.OFPG_ANY,
+                                        0, 0, parser.OFPMatch())
+        datapath.send_msg(req)
+    
+    @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
+    def flow_stats_handler(self, ev):
+        flows = []
+        for stat in ev.msg.body:
+            flows.append('table_id=%s '
+                        'duration_sec=%d duration_nsec=%d '
+                        'priority=%d '
+                        'idle_timeout=%d hard_timeout=%d '
+                        'packet_count=%d byte_count=%d '
+                        'match=%s instructions=%s' %
+                        (stat.table_id,
+                        stat.duration_sec, stat.duration_nsec,
+                        stat.priority,
+                        stat.idle_timeout, stat.hard_timeout,
+                        stat.packet_count, stat.byte_count,
+                        stat.match, stat.instructions))
+        self.logger.info('FlowStats: %s', flows)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
@@ -88,7 +117,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         dpid = format(datapath.id, "d").zfill(16)
         self.mac_to_port.setdefault(dpid, {})
 
-        self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
+        # self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
 
         # learn a mac address to avoid FLOOD next time.
         self.mac_to_port[dpid][src] = in_port
