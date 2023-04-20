@@ -23,6 +23,8 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib import hub
 
+from database import mongo
+
 class SimpleSwitch13(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
@@ -32,13 +34,17 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.datapaths = []
         self.flow_stats = {}
         self.monitor_thread = hub.spawn(self._monitor)
+        self.mongoDB = MongoDB("majordb", "test1")
+        self.mongoDB.issue_ping()
     
     def _monitor(self):
+
         while True:
             self.logger.info("MONITOR CALLED .....")
             for datapath in self.datapaths:
                 self.send_flow_stats_request(datapath)
             hub.sleep(10)
+
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -77,6 +83,7 @@ class SimpleSwitch13(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
     def flow_stats_handler(self, ev):
         flows = []
+        pkt_cnts = []
         for stat in ev.msg.body:
             flows.append('table_id=%s '
                         'duration_sec=%d duration_nsec=%d '
@@ -90,7 +97,10 @@ class SimpleSwitch13(app_manager.RyuApp):
                         stat.idle_timeout, stat.hard_timeout,
                         stat.packet_count, stat.byte_count,
                         stat.match, stat.instructions))
+            pkt_cnts.append(stat.packet_count)
         self.logger.info('FlowStats: %s', flows)
+        self.logger.warn(pkt_cnts)
+        # mongo.send_to_db(flows)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):

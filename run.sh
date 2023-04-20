@@ -9,7 +9,8 @@ case $CHOICE_INPUT in
     sudo python3 mininet/topology.py ;;
 2)
     echo "Running RYU controller"
-    ryu-manager --verbose  controller/l3_switch.py ;;
+    # ryu-manager --verbose controller/l3_switch.py
+    ryu-manager controller/l3_switch.py ;;
 3)
     echo "Clear previous mininet workflow"
     sudo mn -c ;;
