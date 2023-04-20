@@ -1,8 +1,6 @@
 # Adaptive Anomaly Detection System for Software Defined Networks
 
-## Tasks
-### ⬜ - Not Started, 🟨 - Ongoing, 🟩 - Completed
-
+## Tasks ( ⬜ - Not Started, 🟨 - Ongoing, 🟩 - Completed )
 
 🟩 Topology creation with Mininet
 
