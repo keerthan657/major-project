@@ -10,24 +10,24 @@ class MongoDB:
         self.connection = self.get_collection()
 
     def get_collection(self):
-        db = self.client.db_name
-        return db[self.connection]
+        db = self.client[self.db_name]
+        return db[self.collection_name]
     
     def issue_ping(self):
         try:
             self.client.admin.command('ping')
             print("issue_ping: Successfully connected to MongoDB")
-        except e:
+        except Exception as e:
             print("issue_ping - error: ", e)
     
     def send_single_data(self, data):
         try:
             result = self.collection.insert_single(data)
-        except e:
+        except Exception as e:
             print("send_single_data failed - error: ", e)
         
     def send_many_data(self, data):
         try:
             result = self.collection.insert_many(data)
-        except e:
+        except Exception as e:
             print("send_many_data failed - error: ", e)

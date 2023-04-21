@@ -23,7 +23,8 @@ from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
 from ryu.lib import hub
 
-from database import mongo
+from database.mongo import MongoDB
+from configuration import get_controller_timeperiod
 
 class SimpleSwitch13(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -33,17 +34,26 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.mac_to_port = {}
         self.datapaths = []
         self.flow_stats = {}
+        self.total_pkt_cnts = 0
+        self.timeperiod = get_controller_timeperiod()
+        self.init_database()
         self.monitor_thread = hub.spawn(self._monitor)
+    
+    def init_database(self):
+        self.logger.info("\n===================================\n")
+        self.logger.info("** CONNECTING TO MONGO-DB ATLAS ...")
         self.mongoDB = MongoDB("majordb", "test1")
+        self.logger.info("** TESTING DATABASE CONNECTION ...")
         self.mongoDB.issue_ping()
+        self.logger.info("\n===================================\n")
     
     def _monitor(self):
-
         while True:
-            self.logger.info("MONITOR CALLED .....")
+            self.logger.info("\n===================================\n")
+            self.logger.info("** STATS REQUEST SENT ...")
             for datapath in self.datapaths:
                 self.send_flow_stats_request(datapath)
-            hub.sleep(10)
+            hub.sleep(self.timeperiod)
 
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -98,9 +108,20 @@ class SimpleSwitch13(app_manager.RyuApp):
                         stat.packet_count, stat.byte_count,
                         stat.match, stat.instructions))
             pkt_cnts.append(stat.packet_count)
-        self.logger.info('FlowStats: %s', flows)
-        self.logger.warn(pkt_cnts)
-        # mongo.send_to_db(flows)
+        # self.logger.info('FlowStats: %s', flows)
+        self.handle_stats_data(pkt_cnts)
+    
+    """
+    Currently handles stats
+    - number of new packets
+
+    To add features
+    - TODO
+    """
+    def handle_stats_data(self, data):
+        self.logger.info(data)
+        self.logger.info("new packets: %d"%(sum(data)-self.total_pkt_cnts))
+        self.total_pkt_cnts = sum(data)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
