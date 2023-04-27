@@ -92,36 +92,63 @@ class SimpleSwitch13(app_manager.RyuApp):
     
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
     def flow_stats_handler(self, ev):
-        flows = []
-        pkt_cnts = []
-        for stat in ev.msg.body:
-            flows.append('table_id=%s '
-                        'duration_sec=%d duration_nsec=%d '
-                        'priority=%d '
-                        'idle_timeout=%d hard_timeout=%d '
-                        'packet_count=%d byte_count=%d '
-                        'match=%s instructions=%s' %
-                        (stat.table_id,
-                        stat.duration_sec, stat.duration_nsec,
-                        stat.priority,
-                        stat.idle_timeout, stat.hard_timeout,
-                        stat.packet_count, stat.byte_count,
-                        stat.match, stat.instructions))
-            pkt_cnts.append(stat.packet_count)
-        # self.logger.info('FlowStats: %s', flows)
-        self.handle_stats_data(pkt_cnts)
-    
-    """
-    Currently handles stats
-    - number of new packets
+        # Extract the OFPStatsReply object from the event
+        reply = ev.msg.body
 
-    To add features
-    - TODO
-    """
-    def handle_stats_data(self, data):
-        self.logger.info(data)
-        self.logger.info("new packets: %d"%(sum(data)-self.total_pkt_cnts))
-        self.total_pkt_cnts = sum(data)
+        # Define the print_flow_stats function
+        def print_flow_stats(flow_stats):
+            print("  OFPFlowStats:")
+
+            # To print out all possible parameters, use this
+            # for attr, value in flow_stats.__dict__.items():
+            #     if not attr.startswith('_'):
+            #         print(f"    {attr}: {value}")
+
+            """
+            length: The total length of the flow stats message, in bytes, including the header.
+            table_id: The ID of the table where the flow entry is installed. (basically switch ID)
+            duration_sec: The number of seconds that the flow has been active.
+            duration_nsec: The number of nanoseconds that the flow has been active beyond duration_sec.
+            priority: The priority of the flow entry.
+            idle_timeout: The number of seconds that the flow can be idle before being removed from the table.
+            hard_timeout: The number of seconds that the flow can exist before being removed from the table, 
+                        regardless of whether it is idle or not.
+            flags: A bitfield of flags indicating the properties of the flow entry. 
+                        Currently defined flags are OFPFF_SEND_FLOW_REM, which indicates that a flow removed 
+                        message should be sent when the flow is removed, and OFPFF_CHECK_OVERLAP, which indicates 
+                        that the flow entry should be checked for overlap with other entries in the table.
+            cookie: A value that can be used by the controller to store state associated with the flow entry.
+            packet_count: The number of packets that have matched the flow entry.
+            byte_count: The number of bytes that have been matched by the flow entry.
+            match: The OFPMatch object that represents the match fields for the flow entry.
+            instructions: A list of OFPInstruction objects that represent the instructions for processing packets 
+                        that match the flow entry. In this case, there is a single instruction, an OFPInstructionActions 
+                        object, which specifies a single output action that sends packets out a specific port.
+            """
+
+            print(f"    length: {flow_stats.length}")
+            print(f"    duration_sec: {flow_stats.duration_sec}")
+            print(f"    cookie: {flow_stats.cookie}")
+            print(f"    packet_count: {flow_stats.packet_count}")
+            print(f"    byte_count: {flow_stats.byte_count}")
+            print("    match:")
+            for field, value in flow_stats.match.items():
+                print(f"      {field}: {value}")
+            print("    instructions:")
+            for instruction in flow_stats.instructions:
+                print(f"      - {instruction.__class__.__name__}:")
+                for attr, value in instruction.__dict__.items():
+                    if not attr.startswith('_'):
+                        print(f"        {attr}: {value}")
+
+        # Define the print_stats_reply function
+        def print_stats_reply(reply):
+            print("OFPStatsReply:")
+            for stat in reply:
+                print_flow_stats(stat)
+
+        # Call the print_stats_reply function on the OFPStatsReply object
+        print_stats_reply(reply)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
