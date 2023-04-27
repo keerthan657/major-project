@@ -4,13 +4,17 @@
 
 🟩 Topology creation with Mininet
 
-⬜ RYU controller stats collection
+🟩 RYU controller stats collection
+
+🟨 Stats sending to Database
+
+⬜ Dataset generation
 
 ⬜ WebPage design and integration
 
 🟨 ML models research
 
-⬜ DoS attacks using Kali Linux
+⬜ Attack generation
 
 ⬜ Integrating ML models with RYU controller
 
@@ -48,7 +52,7 @@ pip3 install ryu (OR) pip3 install python3-ryu
 1. Run the RYU controller
 
 ```
-ryu-manager --verbose ./path/to/your-app.py
+ryu-manager [--verbose] ./path/to/your-app.py
 ```
 
 2. Run mininet topology file
