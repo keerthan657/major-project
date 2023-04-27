@@ -22,6 +22,17 @@ class MyTopo( Topo ):
         self.addLink( s1, h2 )
         self.addLink( s1, h3 )
 
+def generate_normal_traffic(net):
+    # Get a list of all hosts in the network
+    hosts = net.hosts
+
+    # Choose two random hosts
+    src, dst = random.sample(hosts, 2)
+
+    # Generate normal traffic between the two hosts using iperf
+    print(f"Generating normal traffic from {src.name} to {dst.name}")
+    net.iperf((src, dst), seconds=5)
+
 if __name__ == '__main__':
     setLogLevel('info')
 
@@ -31,6 +42,10 @@ if __name__ == '__main__':
     net.addController(c1)
     net.build()
     net.start()
+
+    # Generate normal traffic 100 times
+    for i in range(10):
+        generate_normal_traffic(net)
 
     CLI( net )
 
