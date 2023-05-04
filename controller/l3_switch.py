@@ -25,6 +25,7 @@ from ryu.lib import hub
 
 from database.mongo import MongoDB
 from configuration import get_controller_timeperiod
+import datetime
 
 class SimpleSwitch13(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -38,6 +39,8 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.timeperiod = get_controller_timeperiod()
         self.init_database()
         self.monitor_thread = hub.spawn(self._monitor)
+        self.prev_pkt_cnt = 0
+        self.prev_pkt_size = 0
     
     def init_database(self):
         self.logger.info("\n===================================\n")
@@ -97,7 +100,7 @@ class SimpleSwitch13(app_manager.RyuApp):
 
         # Define the print_flow_stats function
         def print_flow_stats(flow_stats):
-            print("  OFPFlowStats:")
+            # print("  OFPFlowStats:")
 
             # To print out all possible parameters, use this
             # for attr, value in flow_stats.__dict__.items():
@@ -126,26 +129,49 @@ class SimpleSwitch13(app_manager.RyuApp):
                         object, which specifies a single output action that sends packets out a specific port.
             """
 
-            print(f"    length: {flow_stats.length}")
-            print(f"    duration_sec: {flow_stats.duration_sec}")
-            print(f"    cookie: {flow_stats.cookie}")
-            print(f"    packet_count: {flow_stats.packet_count}")
-            print(f"    byte_count: {flow_stats.byte_count}")
-            print("    match:")
-            for field, value in flow_stats.match.items():
-                print(f"      {field}: {value}")
-            print("    instructions:")
-            for instruction in flow_stats.instructions:
-                print(f"      - {instruction.__class__.__name__}:")
-                for attr, value in instruction.__dict__.items():
-                    if not attr.startswith('_'):
-                        print(f"        {attr}: {value}")
+            # print(f"    length: {flow_stats.length}")
+            # print(f"    duration_sec: {flow_stats.duration_sec}")
+            # print(f"    cookie: {flow_stats.cookie}")
+            # print(f"    packet_count: {flow_stats.packet_count}")
+            # print(f"    byte_count: {flow_stats.byte_count}")
+            # print("    match:")
+            # for field, value in flow_stats.match.items():
+            #     print(f"      {field}: {value}")
+            # print("    instructions:")
+            # for instruction in flow_stats.instructions:
+            #     print(f"      - {instruction.__class__.__name__}:")
+            #     for attr, value in instruction.__dict__.items():
+            #         if not attr.startswith('_'):
+            #             print(f"        {attr}: {value}")
+
+            return [flow_stats.packet_count, flow_stats.length]
+
 
         # Define the print_stats_reply function
         def print_stats_reply(reply):
             print("OFPStatsReply:")
+            reply_data = {}
+            reply_data['timestamp'] = datetime.datetime.now()
+            reply_data['num_flows'] = len(reply)
+            total_x = 0
+            total_y = 0
             for stat in reply:
-                print_flow_stats(stat)
+                [x,y] = print_flow_stats(stat)
+                total_x = total_x + x
+                total_y = total_y + y
+
+            # take sum of x
+            actual_total_x = total_x - self.prev_pkt_cnt
+            self.prev_pkt_cnt = total_x
+            reply_data['pkt_cnt'] = actual_total_x
+            
+            # take average of y
+            actual_total_y = total_y - self.prev_pkt_size
+            self.prev_pkt_size = total_y
+            reply_data['pkt_len'] = actual_total_y
+
+            print(reply_data)
+            self.mongoDB.send_single_data(reply_data)
 
         # Call the print_stats_reply function on the OFPStatsReply object
         print_stats_reply(reply)

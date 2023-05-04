@@ -8,6 +8,11 @@ class MongoDB:
         self.collection_name = collection_name
         self.client = MongoClient(get_atlas_uri())
         self.connection = self.get_collection()
+        self.debugMode = True
+    
+    def printDebug(msg):
+        if(self.debugMode):
+            print(msg)
 
     def get_collection(self):
         db = self.client[self.db_name]
@@ -22,12 +27,13 @@ class MongoDB:
     
     def send_single_data(self, data):
         try:
-            result = self.collection.insert_single(data)
+            result = self.connection.insert_one(data)
+            self.printDebug("send_single_data succeeded - record id: " + result.inserted_id)
         except Exception as e:
             print("send_single_data failed - error: ", e)
         
     def send_many_data(self, data):
         try:
-            result = self.collection.insert_many(data)
+            result = self.connection.insert_many(data)
         except Exception as e:
             print("send_many_data failed - error: ", e)
