@@ -28,7 +28,7 @@ class MongoDB:
     def send_single_data(self, data):
         try:
             result = self.connection.insert_one(data)
-            self.printDebug("send_single_data succeeded - record id: " + result.inserted_id)
+            self.printDebug("send_single_data succeeded - record id: " + str(result.inserted_id))
         except Exception as e:
             print("send_single_data failed - error: ", e)
         

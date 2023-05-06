@@ -24,7 +24,7 @@ from ryu.lib.packet import ether_types
 from ryu.lib import hub
 
 from database.mongo import MongoDB
-from configuration import get_controller_timeperiod
+from configuration import *
 import datetime
 
 class SimpleSwitch13(app_manager.RyuApp):
