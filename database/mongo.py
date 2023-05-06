@@ -10,7 +10,7 @@ class MongoDB:
         self.connection = self.get_collection()
         self.debugMode = True
     
-    def printDebug(msg):
+    def printDebug(self, msg):
         if(self.debugMode):
             print(msg)
 

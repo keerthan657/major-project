@@ -11,3 +11,11 @@ def get_atlas_uri():
 def get_controller_timeperiod():
     timep = data['CONTROLLER_TIMEPERIOD']
     return int(timep)
+
+def get_mongodb_dbname():
+    dbname = data['MONGODB_DB_NAME']
+    return dbname
+
+def get_mongodb_collectionname():
+    cname = data['MONGODB_COLLECTION_NAME']
+    return cname

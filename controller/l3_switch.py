@@ -45,7 +45,7 @@ class SimpleSwitch13(app_manager.RyuApp):
     def init_database(self):
         self.logger.info("\n===================================\n")
         self.logger.info("** CONNECTING TO MONGO-DB ATLAS ...")
-        self.mongoDB = MongoDB("majordb", "test1")
+        self.mongoDB = MongoDB(get_mongodb_dbname(), get_mongodb_collectionname())
         self.logger.info("** TESTING DATABASE CONNECTION ...")
         self.mongoDB.issue_ping()
         self.logger.info("\n===================================\n")
