@@ -6,11 +6,11 @@
 
 🟩 RYU controller stats collection
 
-🟨 Stats sending to Database
+🟩 Stats sending to Database
 
-⬜ Dataset generation
+🟨 Dataset generation
 
-⬜ WebPage design and integration
+🟨 WebPage design and integration
 
 🟨 ML models research
 
@@ -44,7 +44,7 @@ sudo apt install python3
 3. RYU controller
 
 ```
-pip3 install ryu (OR) pip3 install python3-ryu
+pip3 install ryu (OR) sudo apt install python3-ryu
 ```
 
 
