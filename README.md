@@ -47,6 +47,14 @@ sudo apt install python3
 pip3 install ryu (OR) sudo apt install python3-ryu
 ```
 
+4. Other dependencies
+
+```
+sudo apt-get install ffmpeg
+sudo apt-get install netcat
+pip install pymongo
+```
+
 
 ## Running the system
 1. Run the RYU controller
