@@ -49,10 +49,11 @@ def issue_command(host, custom_cmd, run_bg=True):
     else:
         host.cmd(custom_cmd)
 
-def generate_normal_traffic(net, video_service=True, open_vlc=True, file_transfer_service=True, mail_service=True,
-                            http_web_service=True, dns_service=True):
+def generate_normal_traffic(net, video_service=True, open_vlc=True, file_transfer_service=True, http_service=True, mail_service=True,
+                            dns_service=True):
     h1, h2, h3, h4, h5, h6 = net.get('h1', 'h2', 'h3', 'h4', 'h5', 'h6')
 
+    # TODO: make video loop
     if video_service:
         # h1 -> video streaming server
         issue_command(h1, "ffmpeg -re -i {} -vcodec copy -f mpegts - | nc -l -p 9999".format(video_file))
@@ -68,8 +69,13 @@ def generate_normal_traffic(net, video_service=True, open_vlc=True, file_transfe
         # h4 -> file download from file server
         issue_command(h4, "while true; do wget http://{}:9998/{} -O ./assets/temp/random; sleep 5; done".format(h3.IP(), data_file))
 
-    # h5 -> mail server
-    # h6 -> sends mails to mail server
+    if http_service:
+        # h5 -> hosting web server
+        issue_command(h5, "python3 -m http.server 9997")
+        # h6 -> accesses web page
+        issue_command(h6, "while true; do curl {}:9997; sleep 2; done".format(h5.IP()))
+
+    # for VoIP traffic, use linphonec cmd
     
 
 if __name__ == '__main__':
@@ -80,10 +86,11 @@ if __name__ == '__main__':
     net = Mininet(topo, build=False)
     net.addController(c1)
     net.build()
+    # net.addNAT() # to connect to internet
     net.start()
 
-    generate_normal_traffic(net, video_service=False, open_vlc=True, file_transfer_service=False, mail_service=True,
-                            http_web_service=True, dns_service=True)
+    generate_normal_traffic(net, video_service=False, open_vlc=True, file_transfer_service=False, http_service=False,
+                            mail_service=True, dns_service=True)
 
     CLI( net )
 
