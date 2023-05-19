@@ -43,7 +43,7 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.monitor_thread = hub.spawn(self._monitor)
         self.prev_pkt_cnt = 0
         self.prev_pkt_size = 0
-        self.predicted_value = -1
+        self.anomaly_scores = []
         self.fig, self.ax = plt.subplots()
     
     def init_database(self):
@@ -175,16 +175,23 @@ class SimpleSwitch13(app_manager.RyuApp):
             reply_data['pkt_len'] = actual_total_y
 
             # send to DB
-            print(reply_data)
-            self.mongoDB.send_single_data(reply_data)
+            # print(reply_data)
+            # self.mongoDB.send_single_data(reply_data)
 
             # send to ML model
-            add_data(reply_data)
-            self.predicted_value = predict()
+            window = add_data(reply_data)
+            anomaly_score = predict(window)
+            print("## ANOMALY SCORE: ", anomaly_score, ' with window length: ', len(window))
+
+            print(reply_data)
+
+            # send to DB, once enough points are accumulated
+            if(anomaly_score != -1 and anomaly_score != -2):
+                reply_data['anomaly_score'] = anomaly_score
+                self.mongoDB.send_single_data(reply_data)
 
             # accumulate original & predicted data, and apply z-scoring
             plt.ion() # enable dynamic matplotlib window
-            self.accumulate_data()
 
         # Call the print_stats_reply function on the OFPStatsReply object
         print_stats_reply(reply)
@@ -244,6 +251,13 @@ class SimpleSwitch13(app_manager.RyuApp):
                                   in_port=in_port, actions=actions, data=data)
         datapath.send_msg(out)
     
+
+    # self.ax.clear()
+    # self.ax.plot
+    # self.ax.scatter
+    # self.fig.canvas.draw()
+    # plt.pause(0.001)
+
     def accumulate_data(self):
 
         # clear the plot
@@ -252,27 +266,9 @@ class SimpleSwitch13(app_manager.RyuApp):
         # segregate the required data
         original_timestamps = [x['timestamp'] for x in original_data]
         original_pkt_cnt = [x['pkt_cnt'] for x in original_data]
-        predicted_timestamps = [x['timestamp'] for x in predicted_data]
-        predicted_pkt_cnt = [x['predicted_pkt_cnt'] for x in predicted_data]
 
-        # apply the z-thresholding
-        # TODO: the red dot is not showin at all, test it
-        anomalies_data = z_thresholding(original_timestamps, predicted_timestamps, original_pkt_cnt, predicted_pkt_cnt)
-        scatter_x = []
-        scatter_y = []
-        for anomaly in anomalies_data:
-            if anomaly['anomaly']==True:
-                scatter_x.append(anomaly['timestamp'])
-                scatter_y.append([x['predicted_pkt_cnt'] for x in predicted_data if x['timestamp'] == anomaly['timestamp']][0])
-
-        # Plot the line graph for 'original_data'
-        self.ax.plot(original_timestamps, original_pkt_cnt, color='blue', label='Original Data')
-
-        # Overlay red circles on the 'predicted_data' points
-        self.ax.plot(predicted_timestamps, predicted_pkt_cnt, color='red', linestyle='--', label='Predicted Data')
-
-        # Scatter plot for anomalies
-        self.ax.scatter(scatter_x, scatter_y, color='red', marker='o', label='Anomalies')
+        # plot the pkt rate
+        self.ax.plot(original_timestamps, original_pkt_cnt, color='red', label='original')
 
         # Set the plot labels and title
         self.ax.set_xlabel('Timestamp')

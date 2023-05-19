@@ -23,3 +23,7 @@ def get_mongodb_collectionname():
 def get_ml_windowsize():
     ws = data['WINDOW_SIZE']
     return int(ws)
+
+def get_dl_model():
+    dlm = data['DL_MODEL']
+    return dlm
