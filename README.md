@@ -8,17 +8,17 @@
 
 🟩 Stats sending to Database
 
-🟨 Dataset generation
+🟩 Dataset generation
 
 🟨 WebPage design and integration
 
-🟨 ML models research
+🟩 ML models research
 
-⬜ Attack generation
+🟩 Attack generation
 
-⬜ Integrating ML models with RYU controller
+🟩 Integrating ML models with RYU controller
 
-⬜ Final tests
+🟨 Final tests
 
 
 ## Environment
@@ -52,9 +52,13 @@ pip3 install ryu (OR) sudo apt install python3-ryu
 ```
 sudo apt-get install ffmpeg
 sudo apt-get install netcat
-pip install pymongo
+pip3 install pymongo
 ```
 
+5. Machine learning models: 
+- RBM (Restricted Boltzamann Machine)
+- VAE (Variational Auto-Encoder)
+- N-BEATS
 
 ## Running the system
 1. Run the RYU controller
