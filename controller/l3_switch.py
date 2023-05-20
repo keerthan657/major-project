@@ -24,7 +24,7 @@ from ryu.lib.packet import ether_types
 from ryu.lib import hub
 
 from database.mongo import MongoDB
-from ml.predictor import add_data, predict, original_data, predicted_data, z_thresholding
+from ml.predictor import add_data, predict, original_data, predicted_data, z_thresholding, print_data_table
 from configuration import *
 import datetime
 import matplotlib.pyplot as plt
@@ -39,11 +39,12 @@ class SimpleSwitch13(app_manager.RyuApp):
         self.flow_stats = {}
         self.total_pkt_cnts = 0
         self.timeperiod = get_controller_timeperiod()
-        self.init_database()
+        # self.init_database()
         self.monitor_thread = hub.spawn(self._monitor)
         self.prev_pkt_cnt = 0
         self.prev_pkt_size = 0
         self.anomaly_scores = []
+        self.plottable_data = []
         self.fig, self.ax = plt.subplots()
     
     def init_database(self):
@@ -175,22 +176,30 @@ class SimpleSwitch13(app_manager.RyuApp):
             reply_data['pkt_len'] = actual_total_y
 
             # send to DB
-            # print(reply_data)
+            print(reply_data)
             # self.mongoDB.send_single_data(reply_data)
 
             # send to ML model
             window = add_data(reply_data)
             anomaly_score = predict(window)
+            reply_data['anomaly_score'] = anomaly_score
             print("## ANOMALY SCORE: ", anomaly_score, ' with window length: ', len(window))
 
-            print(reply_data)
-
             # send to DB, once enough points are accumulated
-            if(anomaly_score != -1 and anomaly_score != -2):
-                reply_data['anomaly_score'] = anomaly_score
-                self.mongoDB.send_single_data(reply_data)
+            # print(reply_data)
+            # if(anomaly_score != -1 and anomaly_score != -2):
+            #     reply_data['anomaly_score'] = anomaly_score
+            #     self.mongoDB.send_single_data(reply_data)
 
-            # accumulate original & predicted data, and apply z-scoring
+            # collect data to plot
+            self.plottable_data.append(reply_data)
+            if(len(self.plottable_data) > 60):
+                self.plottable_data.pop(0)
+            
+            # print_data_table(original_data)
+
+            # accumulate original & predicted data, and plot
+            self.accumulate_data()
             plt.ion() # enable dynamic matplotlib window
 
         # Call the print_stats_reply function on the OFPStatsReply object
@@ -262,13 +271,23 @@ class SimpleSwitch13(app_manager.RyuApp):
 
         # clear the plot
         self.ax.clear()
+        self.ax.set_ylim([0, 3500])
+
+        print_data_table(self.plottable_data)
         
         # segregate the required data
-        original_timestamps = [x['timestamp'] for x in original_data]
-        original_pkt_cnt = [x['pkt_cnt'] for x in original_data]
-
+        original_timestamps = [x['timestamp'] for x in self.plottable_data]
+        original_pkt_cnt = [x['pkt_cnt'] for x in self.plottable_data]
+        
         # plot the pkt rate
         self.ax.plot(original_timestamps, original_pkt_cnt, color='red', label='original')
+
+        # show the anomalies in red shaded windows
+        for i in range(len(self.plottable_data)-1):
+            pdata = self.plottable_data[i]
+            pdata1 = self.plottable_data[i+1]
+            if(pdata['anomaly_score'] > 0.1):
+                self.ax.axvspan(pdata['timestamp'], pdata1['timestamp'], facecolor='red', alpha=0.3)
 
         # Set the plot labels and title
         self.ax.set_xlabel('Timestamp')

@@ -1,11 +1,12 @@
 # TODO: convert this to a seperate class
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from configuration import get_controller_timeperiod
 from configuration import get_ml_windowsize, get_dl_model, get_controller_timeperiod
 import numpy as np
 import statistics
 import pickle
+from tabulate import tabulate
 
 import torch
 import torch.nn as nn
@@ -67,6 +68,26 @@ def calculate_statistics(numbers):
     print("Minimum:", minimum)
     print("Maximum:", maximum)
     print("Count:", count)
+
+def print_data_table(plottable_data):
+    # Extract the keys from the first item in plottable_data
+    keys = plottable_data[0].keys()
+
+    # Modify the timestamp format
+    keys = [key if key != 'timestamp' else 'time' for key in keys]
+
+    # Create a list of lists to store the data as rows
+    data = []
+    for item in plottable_data:
+        row = []
+        for key, value in item.items():
+            if key == 'timestamp':
+                value = datetime.strftime(value, "%M:%S")
+            row.append(value)
+        data.append(row)
+
+    # Print the table using tabulate with adjusted column widths
+    print(tabulate(data, headers=keys, tablefmt='fancy_grid'))
 
 original_data = []
 predicted_data = []
@@ -140,13 +161,13 @@ def predict_VAE(window):
     for i in range(window_size):
         window1.append(i/10)
         window1.append(normalize(window[i]['pkt_cnt'], 1255, 1926))
-    print('window1: ', window1)
+    # print('window1: ', window1)
 
     # get anomaly score (MSE, for window size of 10)
     with torch.no_grad():
         window2 = [window1]
         window2 = torch.tensor(window2, dtype=torch.float32)
-        print('window2: ', window2)
+        # print('window2: ', window2)
         window2 = window2.reshape(1, -1)
         recon_window, mean, logvar = model(window2)
         mse = torch.mean(torch.pow(window2 - recon_window, 2))
@@ -167,7 +188,7 @@ def predict_NBEATS(window):
     for i in range(window_size):
         window1.append(i/10)
         window1.append(normalize(window[i]['pkt_cnt'], 1255, 1926))
-    print('window1: ', window1)
+    # print('window1: ', window1)
 
     # get prediction
     pred_val = model_pytorch.predict(np.array(window1))
