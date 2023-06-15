@@ -2,7 +2,7 @@
 
 # MongoDB stuff
 MONGO_ATLAS_URI: mongodb+srv://keerthan1:<password>@cluster0.c0qa6ri.mongodb.net/?retryWrites=true&w=majority
-MONGO_PASSWORD: mtH4BprvyPCEL # make sure not to use any special characters in your password
+MONGO_PASSWORD: xxxxxxxxxxx # put your password here, make sure not to use any special characters in your password
 MONGODB_DB_NAME: major
 MONGODB_COLLECTION_NAME: mltest3
 
