@@ -10,7 +10,7 @@
 
 🟩 Dataset generation
 
-🟨 WebPage design and integration
+🟩 WebPage design and integration
 
 🟩 ML models research
 
@@ -18,7 +18,7 @@
 
 🟩 Integrating ML models with RYU controller
 
-🟨 Final tests
+🟩 Final tests
 
 
 ## Environment
