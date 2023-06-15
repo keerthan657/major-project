@@ -1,0 +1,14 @@
+# Config file for all project settings
+
+# MongoDB stuff
+MONGO_ATLAS_URI: mongodb+srv://keerthan1:<password>@cluster0.c0qa6ri.mongodb.net/?retryWrites=true&w=majority
+MONGO_PASSWORD: mtH4BprvyPCEL # make sure not to use any special characters in your password
+MONGODB_DB_NAME: major
+MONGODB_COLLECTION_NAME: mltest3
+
+# Controller stuff
+CONTROLLER_TIMEPERIOD: 10 # in seconds
+
+# ML model stuff
+WINDOW_SIZE: 10 # number of elements
+DL_MODEL: NBEATS # RBM / VAE / NBEATS
